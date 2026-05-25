@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoRisk Analyser</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }
+        header { background: #1a3c5e; color: white; padding: 20px 40px; }
+        header h1 { font-size: 24px; }
+        header p { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .search-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .search-box h2 { font-size: 18px; margin-bottom: 16px; color: #1a3c5e; }
+        .input-row { display: flex; gap: 12px; }
+        input { flex: 1; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+        input:focus { border-color: #1a3c5e; }
+        button { padding: 12px 24px; background: #1a3c5e; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        button:hover { background: #2a5080; }
+        button:disabled { background: #aaa; cursor: not-allowed; }
+        .loader { display: none; text-align: center; margin: 30px 0; color: #666; }
+        .rapport { display: none; background: white; border-radius: 12px; padding: 30px; margin-top: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .rapport-content { line-height: 1.7; }
+        .rapport-content h1 { font-size: 20px; color: #1a3c5e; margin: 16px 0 8px; }
+        .rapport-content h2 { font-size: 17px; color: #1a3c5e; margin: 20px 0 8px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .rapport-content h3 { font-size: 15px; margin: 14px 0 6px; }
+        .rapport-content p { margin: 6px 0; }
+        .rapport-content strong { color: #1a3c5e; }
+        .rapport-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .rapport-content td { padding: 8px 12px; border: 1px solid #eee; font-size: 14px; }
+        .rapport-content blockquote { background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px 16px; border-radius: 4px; margin: 12px 0; font-size: 14px; }
+        .error { background: #fff0f0; color: #c00; padding: 16px; border-radius: 8px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🌍 GeoRisk Analyser</h1>
+    <p>Analyse des risques environnementaux pour l'immobilier — données officielles Géorisques</p>
+</header>
+
+<div class="container">
+    <div class="search-box">
+        <h2>Analysez les risques d'un bien immobilier</h2>
+        <div class="input-row">
+            <input type="text" id="adresse" placeholder="Ex : 15 rue de la Paix, Paris 75002" />
+            <button onclick="analyser()" id="btn">Analyser</button>
+        </div>
+    </div>
+
+    <div class="loader" id="loader">
+        ⏳ Récupération des données officielles et analyse en cours...
+    </div>
+
+    <div class="rapport" id="rapport">
+        <div class="rapport-content" id="rapport-content"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+async function analyser() {
+    const adresse = document.getElementById("adresse").value.trim();
+    if (!adresse) return;
+
+    const btn = document.getElementById("btn");
+    const loader = document.getElementById("loader");
+    const rapportDiv = document.getElementById("rapport");
+    const rapportContent = document.getElementById("rapport-content");
+
+    btn.disabled = true;
+    loader.style.display = "block";
+    rapportDiv.style.display = "none";
+
+    try {
+        const response = await fetch("/analyser", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adresse })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            rapportContent.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+        } else {
+            rapportContent.innerHTML = marked.parse(data.rapport);
+        }
+
+        rapportDiv.style.display = "block";
+
+    } catch (err) {
+        rapportContent.innerHTML = `<div class="error">❌ Erreur de connexion au serveur</div>`;
+        rapportDiv.style.display = "block";
+    }
+
+    btn.disabled = false;
+    loader.style.display = "none";
+}
+
+document.getElementById("adresse").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") analyser();
+});
+</script>
+
+</body>
+</html>
