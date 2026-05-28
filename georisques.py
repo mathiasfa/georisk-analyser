@@ -17,14 +17,16 @@ def get_adresse_coords(adresse):
     return lat, lon
 
 def get_risques_georisques(lat, lon):
-    """Récupère les risques officiels depuis l'API Géorisques."""
     url = "https://georisques.gouv.fr/api/v1/resultats_rapport_risque"
     params = {
         "latlon": f"{lon},{lat}",
         "rayon": 1000
     }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; GeoRiskAnalyser/1.0)"
+    }
     
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, headers=headers, timeout=30)
     
     if response.status_code != 200:
         print(f"Erreur API Géorisques : {response.status_code}")
